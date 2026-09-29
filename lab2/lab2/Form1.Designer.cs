@@ -48,6 +48,8 @@
             lblTime = new Label();
             folderBrowserDialog = new FolderBrowserDialog();
             lblExtraInfo = new Label();
+            lblBrokenCount = new Label();
+            lblUnknownCount = new Label();
             ((System.ComponentModel.ISupportInitialize)dgvImages).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picPreview).BeginInit();
             SuspendLayout();
@@ -219,11 +221,31 @@
             lblExtraInfo.Size = new Size(0, 20);
             lblExtraInfo.TabIndex = 10;
             // 
+            // lblBrokenCount
+            // 
+            lblBrokenCount.AutoSize = true;
+            lblBrokenCount.Location = new Point(12, 102);
+            lblBrokenCount.Name = "lblBrokenCount";
+            lblBrokenCount.Size = new Size(102, 20);
+            lblBrokenCount.TabIndex = 11;
+            lblBrokenCount.Text = "Повреждено:";
+            // 
+            // lblUnknownCount
+            // 
+            lblUnknownCount.AutoSize = true;
+            lblUnknownCount.Location = new Point(12, 126);
+            lblUnknownCount.Name = "lblUnknownCount";
+            lblUnknownCount.Size = new Size(162, 20);
+            lblUnknownCount.TabIndex = 12;
+            lblUnknownCount.Text = "Неизвестный формат:";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1117, 425);
+            Controls.Add(lblUnknownCount);
+            Controls.Add(lblBrokenCount);
             Controls.Add(lblExtraInfo);
             Controls.Add(lblTime);
             Controls.Add(lblInfo);
@@ -265,5 +287,7 @@
         private DataGridViewTextBoxColumn colCompression;
         private DataGridViewTextBoxColumn colStatus;
         private Label lblExtraInfo;
+        private Label lblBrokenCount;
+        private Label lblUnknownCount;
     }
 }
