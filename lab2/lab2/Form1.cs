@@ -14,56 +14,70 @@ namespace lab2
     {
         private CancellationTokenSource? cancellationTokenSource;
 
+        private class RowData
+        {
+            public string Path { get; set; } = "";
+            public ImageInfo Info { get; set; } = new ImageInfo();
+        }
+
         public Form1()
         {
             InitializeComponent();
 
             btnStop.Enabled = false;
+            btnExtraInfo.Enabled = false;
 
             lblBrokenCount.Text = "Повреждено: 0";
             lblUnknownCount.Text = "Неизвестных: 0";
+            lblExtraInfo.Text = "";
         }
 
-        // Выбор папки
         private void btnChooseFolder_Click(object sender, EventArgs e)
         {
             if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
             {
-                txtFolderPath.Text = folderBrowserDialog.SelectedPath;
+                txtFolderPath.Text =
+                    folderBrowserDialog.SelectedPath;
             }
         }
 
-        // Сканирование
         private async void btnScan_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtFolderPath.Text))
             {
-                MessageBox.Show("Сначала выберите папку.");
+                MessageBox.Show(
+                    "Сначала выберите папку."
+                );
+
                 return;
             }
 
             if (!Directory.Exists(txtFolderPath.Text))
             {
-                MessageBox.Show("Такой папки не существует.");
+                MessageBox.Show(
+                    "Папка не существует."
+                );
+
                 return;
             }
 
             dgvImages.Rows.Clear();
 
-            progressBar.Value = 0;
+            lblInfo.Text = "";
+            lblExtraInfo.Text = "";
 
-            lblProgress.Text = "0 / 0";
-            lblTime.Text = "Время: 0 сек";
+            lblBrokenCount.Text =
+                "Повреждено: 0";
 
-            lblBrokenCount.Text = "Повреждено: 0";
-            lblUnknownCount.Text = "Неизвестных: 0";
+            lblUnknownCount.Text =
+                "Неизвестных: 0";
+
+            btnExtraInfo.Enabled = false;
 
             string[] files;
 
             try
             {
-                // Берём файлы из выбранной папки
-                // и всех вложенных подпапок
                 files = Directory.GetFiles(
                     txtFolderPath.Text,
                     "*.*",
@@ -73,7 +87,8 @@ namespace lab2
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Ошибка при обходе папок: " + ex.Message
+                    "Ошибка обхода папок: " +
+                    ex.Message
                 );
 
                 return;
@@ -81,15 +96,22 @@ namespace lab2
 
             if (files.Length == 0)
             {
-                MessageBox.Show("Файлы не найдены.");
+                MessageBox.Show(
+                    "Файлы не найдены."
+                );
+
                 return;
             }
 
             progressBar.Minimum = 0;
             progressBar.Maximum = files.Length;
+            progressBar.Value = 0;
 
             lblProgress.Text =
                 "0 / " + files.Length;
+
+            lblTime.Text =
+                "Время: 0 сек";
 
             btnChooseFolder.Enabled = false;
             btnScan.Enabled = false;
@@ -120,15 +142,16 @@ namespace lab2
                 await Parallel.ForEachAsync(
                     files,
                     options,
+
                     (file, ct) =>
                     {
                         ct.ThrowIfCancellationRequested();
 
-                        // Читаем файл
+                        //Thread.Sleep(50);
+
                         ImageInfo info =
                             ImageScanner.ReadFile(file);
 
-                        // Неизвестный формат
                         if (
                             info.Format == "Unknown" ||
                             info.Format == "Неизвестный"
@@ -138,9 +161,6 @@ namespace lab2
                                 ref unknownCount
                             );
                         }
-
-                        // Формат известен,
-                        // но файл имеет ошибку
                         else if (
                             !string.IsNullOrWhiteSpace(
                                 info.Status
@@ -148,8 +168,7 @@ namespace lab2
                             info.Status != "OK" &&
                             !info.Status.Contains(
                                 "расшир",
-                                StringComparison
-                                    .OrdinalIgnoreCase
+                                StringComparison.OrdinalIgnoreCase
                             )
                         )
                         {
@@ -163,7 +182,6 @@ namespace lab2
                                 ref processed
                             );
 
-                        // Обновляем интерфейс
                         Invoke(() =>
                         {
                             int rowIndex =
@@ -178,12 +196,12 @@ namespace lab2
                                     info.Status
                                 );
 
-                            // Сохраняем полный путь.
-                            // Это важно теперь,
-                            // когда есть подпапки.
-                            dgvImages.Rows[
-                                rowIndex
-                            ].Tag = file;
+                            dgvImages.Rows[rowIndex].Tag =
+                                new RowData
+                                {
+                                    Path = file,
+                                    Info = info
+                                };
 
                             progressBar.Value =
                                 Math.Min(
@@ -220,7 +238,8 @@ namespace lab2
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Ошибка: " + ex.Message
+                    "Ошибка: " +
+                    ex.Message
                 );
             }
             finally
@@ -243,7 +262,6 @@ namespace lab2
             }
         }
 
-        // Остановка сканирования
         private void btnStop_Click(
             object sender,
             EventArgs e
@@ -254,62 +272,84 @@ namespace lab2
             btnStop.Enabled = false;
         }
 
-        // Выбор строки в таблице
         private void dgvImages_SelectionChanged(
             object sender,
             EventArgs e
         )
         {
             if (dgvImages.SelectedRows.Count == 0)
+            {
+                btnExtraInfo.Enabled = false;
+                lblExtraInfo.Text = "";
+
                 return;
+            }
 
             DataGridViewRow row =
                 dgvImages.SelectedRows[0];
 
-            // Теперь здесь хранится полный путь,
-            // поэтому файлы из подпапок тоже откроются
-            string? path =
-                row.Tag as string;
+            RowData? data =
+                row.Tag as RowData;
 
-            if (
-                string.IsNullOrWhiteSpace(path) ||
-                !File.Exists(path)
-            )
+            if (data == null)
             {
+                btnExtraInfo.Enabled = false;
+                lblExtraInfo.Text = "";
+
                 return;
             }
 
+            string path =
+                data.Path;
+
+            ImageInfo info =
+                data.Info;
+
             lblInfo.Text =
                 "Имя: " +
-                row.Cells[0].Value +
+                info.FileName +
                 Environment.NewLine +
 
                 "Формат: " +
-                row.Cells[1].Value +
+                info.Format +
                 Environment.NewLine +
 
                 "Размер: " +
-                row.Cells[2].Value +
+                info.Width +
                 " x " +
-                row.Cells[3].Value +
+                info.Height +
                 Environment.NewLine +
 
                 "DPI: " +
-                row.Cells[4].Value +
+                info.Dpi +
                 Environment.NewLine +
 
                 "Глубина цвета: " +
-                row.Cells[5].Value +
+                info.ColorDepth +
                 Environment.NewLine +
 
                 "Сжатие: " +
-                row.Cells[6].Value +
+                info.Compression +
                 Environment.NewLine +
 
                 "Статус: " +
-                row.Cells[7].Value;
+                info.Status;
 
-            // Удаляем старое изображение
+            if (string.IsNullOrWhiteSpace(info.ExtraInfo))
+            {
+                lblExtraInfo.Text =
+                    "Дополнительной информации нет";
+
+                btnExtraInfo.Enabled = false;
+            }
+            else
+            {
+                lblExtraInfo.Text =
+                    "Есть дополнительная информация";
+
+                btnExtraInfo.Enabled = true;
+            }
+
             if (picPreview.Image != null)
             {
                 Image oldImage =
@@ -320,7 +360,9 @@ namespace lab2
                 oldImage.Dispose();
             }
 
-            // Предпросмотр
+            if (!File.Exists(path))
+                return;
+
             try
             {
                 using Image temp =
@@ -328,16 +370,75 @@ namespace lab2
 
                 picPreview.Image =
                     new Bitmap(temp);
-
-                lblExtraInfo.Text = "";
             }
             catch
             {
                 picPreview.Image = null;
-
-                lblExtraInfo.Text =
-                    "Предпросмотр недоступен";
             }
+        }
+
+        private void btnExtraInfo_Click(
+            object sender,
+            EventArgs e
+        )
+        {
+            if (dgvImages.SelectedRows.Count == 0)
+                return;
+
+            DataGridViewRow row =
+                dgvImages.SelectedRows[0];
+
+            RowData? data =
+                row.Tag as RowData;
+
+            if (data == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(
+                data.Info.ExtraInfo
+            ))
+            {
+                return;
+            }
+
+            Form extraForm =
+                new Form();
+
+            extraForm.Text =
+                "Дополнительная информация - " +
+                data.Info.FileName;
+
+            extraForm.Width = 750;
+            extraForm.Height = 650;
+
+            extraForm.StartPosition =
+                FormStartPosition.CenterParent;
+
+            RichTextBox textBox =
+                new RichTextBox();
+
+            textBox.Dock =
+                DockStyle.Fill;
+
+            textBox.ReadOnly = true;
+
+            textBox.Font =
+                new Font(
+                    "Consolas",
+                    10
+                );
+
+            textBox.WordWrap = false;
+
+            textBox.ScrollBars =
+                RichTextBoxScrollBars.Both;
+
+            textBox.Text =
+                data.Info.ExtraInfo;
+
+            extraForm.Controls.Add(textBox);
+
+            extraForm.ShowDialog(this);
         }
     }
 }

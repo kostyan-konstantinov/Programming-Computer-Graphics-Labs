@@ -50,6 +50,7 @@
             lblExtraInfo = new Label();
             lblBrokenCount = new Label();
             lblUnknownCount = new Label();
+            btnExtraInfo = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvImages).BeginInit();
             ((System.ComponentModel.ISupportInitialize)picPreview).BeginInit();
             SuspendLayout();
@@ -239,11 +240,22 @@
             lblUnknownCount.TabIndex = 12;
             lblUnknownCount.Text = "Неизвестный формат:";
             // 
+            // btnExtraInfo
+            // 
+            btnExtraInfo.Location = new Point(1011, 4);
+            btnExtraInfo.Name = "btnExtraInfo";
+            btnExtraInfo.Size = new Size(94, 29);
+            btnExtraInfo.TabIndex = 13;
+            btnExtraInfo.Text = "Доп. инфо";
+            btnExtraInfo.UseVisualStyleBackColor = true;
+            btnExtraInfo.Click += btnExtraInfo_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1117, 425);
+            Controls.Add(btnExtraInfo);
             Controls.Add(lblUnknownCount);
             Controls.Add(lblBrokenCount);
             Controls.Add(lblExtraInfo);
@@ -289,5 +301,6 @@
         private Label lblExtraInfo;
         private Label lblBrokenCount;
         private Label lblUnknownCount;
+        private Button btnExtraInfo;
     }
 }

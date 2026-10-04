@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using lab2.Models;
@@ -13,10 +13,11 @@ namespace lab2.Parsers
             {
                 FileName = Path.GetFileName(path),
                 Format = "GIF",
-                Dpi = "Не задано",
+                Dpi = "96 x 96 (по умолчанию)",
                 ColorDepth = "-",
                 Compression = "LZW",
-                Status = "OK"
+                Status = "OK",
+                ExtraInfo = ""
             };
 
             try
@@ -35,18 +36,35 @@ namespace lab2.Parsers
                 }
 
                 byte[] header = new byte[6];
-                fs.ReadExactly(header, 0, 6);
 
-                string signature = Encoding.ASCII.GetString(header);
+                fs.ReadExactly(
+                    header,
+                    0,
+                    6
+                );
 
-                if (signature != "GIF87a" && signature != "GIF89a")
+                string signature =
+                    Encoding.ASCII.GetString(header);
+
+                if (
+                    signature != "GIF87a" &&
+                    signature != "GIF89a"
+                )
                 {
-                    info.Status = "Неверная сигнатура";
+                    info.Status =
+                        "Неверная сигнатура";
+
                     return info;
                 }
 
-                byte[] descriptor = new byte[7];
-                fs.ReadExactly(descriptor, 0, 7);
+                byte[] descriptor =
+                    new byte[7];
+
+                fs.ReadExactly(
+                    descriptor,
+                    0,
+                    7
+                );
 
                 info.Width =
                     descriptor[0] |
@@ -56,7 +74,8 @@ namespace lab2.Parsers
                     descriptor[2] |
                     (descriptor[3] << 8);
 
-                byte packed = descriptor[4];
+                byte packed =
+                    descriptor[4];
 
                 bool globalColorTable =
                     (packed & 0b10000000) != 0;
@@ -64,23 +83,38 @@ namespace lab2.Parsers
                 int paletteBits =
                     (packed & 0b00000111) + 1;
 
+                // В основном поле показываем
+                // только глубину цвета.
+                info.ColorDepth =
+                    paletteBits + " bit";
+
                 if (globalColorTable)
                 {
-                    int colors = 1 << paletteBits;
+                    int colors =
+                        1 << paletteBits;
 
-                    info.ColorDepth =
-                        paletteBits + " bit (" +
-                        colors + " цветов)";
+                    // Размер палитры уходит
+                    // в дополнительную информацию.
+                    info.ExtraInfo =
+                        "Глобальная палитра GIF" +
+                        Environment.NewLine +
+                        "Количество цветов: " +
+                        colors;
                 }
                 else
                 {
-                    info.ColorDepth =
-                        paletteBits + " bit";
+                    info.ExtraInfo =
+                        "Глобальная палитра отсутствует";
                 }
 
-                if (info.Width <= 0 || info.Height <= 0)
+                if (
+                    info.Width <= 0 ||
+                    info.Height <= 0
+                )
                 {
-                    info.Status = "Некорректный размер";
+                    info.Status =
+                        "Некорректный размер";
+
                     return info;
                 }
 
@@ -88,19 +122,23 @@ namespace lab2.Parsers
             }
             catch (EndOfStreamException)
             {
-                info.Status = "Файл поврежден";
+                info.Status =
+                    "Файл поврежден";
             }
             catch (UnauthorizedAccessException)
             {
-                info.Status = "Нет доступа";
+                info.Status =
+                    "Нет доступа";
             }
             catch (IOException)
             {
-                info.Status = "Ошибка чтения";
+                info.Status =
+                    "Ошибка чтения";
             }
-            catch (Exception)
+            catch
             {
-                info.Status = "Неизвестная ошибка";
+                info.Status =
+                    "Неизвестная ошибка";
             }
 
             return info;
