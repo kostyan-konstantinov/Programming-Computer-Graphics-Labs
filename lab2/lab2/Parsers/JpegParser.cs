@@ -8,7 +8,7 @@ namespace lab2.Parsers
 {
     public static class JpegParser
     {
-        // Порядок коэффициентов в JPEG-файле.
+        // порядок коэффициентов в JPEG
         private static readonly int[] ZigZag =
         {
              0,  1,  8, 16,  9,  2,  3, 10,
@@ -21,8 +21,7 @@ namespace lab2.Parsers
             53, 60, 61, 54, 47, 55, 62, 63
         };
 
-        // Стандартная таблица яркости JPEG примерно для качества 50.
-        // Используется только для оценки качества.
+        
         private static readonly int[] StandardLuminanceTable =
         {
             16, 11, 10, 16, 24, 40, 51, 61,
@@ -112,7 +111,7 @@ namespace lab2.Parsers
                     if (marker == 0xDA)
                         break;
 
-                    // Restart-маркеры.
+                    
                     if (marker >= 0xD0 &&
                         marker <= 0xD7)
                     {
@@ -149,9 +148,7 @@ namespace lab2.Parsers
                         return info;
                     }
 
-                    // --------------------------------
                     // APP0 / JFIF - DPI
-                    // --------------------------------
                     if (marker == 0xE0 &&
                         dataLength >= 14)
                     {
@@ -217,9 +214,8 @@ namespace lab2.Parsers
                         }
                     }
 
-                    // --------------------------------
+
                     // DQT = FF DB
-                    // --------------------------------
                     else if (marker == 0xDB)
                     {
                         byte[] dqt =
@@ -240,9 +236,9 @@ namespace lab2.Parsers
                         foundDqt = true;
                     }
 
-                    // --------------------------------
+
                     // SOF0
-                    // --------------------------------
+
                     else if (
                         marker == 0xC0 &&
                         dataLength >= 6
@@ -298,9 +294,7 @@ namespace lab2.Parsers
                     return info;
                 }
 
-                // --------------------------------
                 // Формируем ExtraInfo
-                // --------------------------------
 
                 StringBuilder extra =
                     new StringBuilder();
@@ -394,9 +388,8 @@ namespace lab2.Parsers
             return info;
         }
 
-        // ----------------------------------------
+
         // Чтение DQT
-        // ----------------------------------------
         private static void ParseDqt(
             byte[] data,
             StringBuilder output,
@@ -409,14 +402,9 @@ namespace lab2.Parsers
                 int tableInfo =
                     data[pos++];
 
-                // Старшие 4 бита:
-                // 0 = коэффициенты 8 bit,
-                // 1 = коэффициенты 16 bit.
                 int precision =
                     tableInfo >> 4;
 
-                // Младшие 4 бита:
-                // номер таблицы.
                 int tableId =
                     tableInfo & 0x0F;
 
@@ -465,9 +453,7 @@ namespace lab2.Parsers
                         pos += 2;
                     }
 
-                    // JPEG хранит значения
-                    // в zig-zag порядке.
-                    // Возвращаем обычную матрицу.
+                    
                     matrix[ZigZag[i]] =
                         value;
                 }
@@ -493,7 +479,6 @@ namespace lab2.Parsers
                     );
                 }
 
-                // Вывод 8x8.
                 for (
                     int row = 0;
                     row < 8;
@@ -520,8 +505,6 @@ namespace lab2.Parsers
 
                 output.AppendLine();
 
-                // Основная таблица яркости
-                // используется для оценки качества.
                 if (
                     tableId == 0 &&
                     precision == 0 &&
@@ -536,9 +519,6 @@ namespace lab2.Parsers
             }
         }
 
-        // ----------------------------------------
-        // Приблизительная оценка quality
-        // ----------------------------------------
         private static double EstimateQuality(
             int[] matrix)
         {
@@ -557,9 +537,6 @@ namespace lab2.Parsers
 
             ratios.Sort();
 
-            // Берём медиану,
-            // чтобы отдельные коэффициенты
-            // меньше влияли на результат.
             double scale =
                 ratios[
                     ratios.Count / 2
@@ -585,9 +562,7 @@ namespace lab2.Parsers
             );
         }
 
-        // ----------------------------------------
         // SOF
-        // ----------------------------------------
         private static void ReadSof(
             FileStream fs,
             ImageInfo info)
