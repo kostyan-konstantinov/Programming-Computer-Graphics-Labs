@@ -1,0 +1,88 @@
+<Window x:Class="Lab5.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:gl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
+ Title="lab5 1.5.2" Width="1280" Height="850" MinWidth="1000" MinHeight="700"
+ Background="White" FontFamily="Segoe UI" FontSize="12" WindowStartupLocation="CenterScreen">
+ <DockPanel Margin="8">
+  <TabControl x:Name="ModeTabs" DockPanel.Dock="Top" Height="31" SelectionChanged="ModeTabs_Changed">
+   <TabItem Header="Отрезки"/>
+   <TabItem Header="Многоугольники"/>
+  </TabControl>
+  <StatusBar DockPanel.Dock="Bottom" Padding="0,3" Background="Transparent">
+   <TextBlock x:Name="Status" Text="Готово" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+  </StatusBar>
+  <Grid Margin="0,8,0,4">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="264"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="0,0,3,0">
+     <StackPanel x:Name="LineControls">
+      <GroupBox Header="Алгоритм"><ComboBox x:Name="Algorithm" SelectionChanged="LineSetting_Changed" SelectedIndex="0">
+       <ComboBoxItem Content="Средняя точка"/><ComboBoxItem Content="Сазерленд–Коэн"/><ComboBoxItem Content="Лианг–Барски"/>
+      </ComboBox></GroupBox>
+      <GroupBox Header="Данные"><StackPanel>
+       <ComboBox x:Name="LineSample" SelectionChanged="LineSample_Changed"/>
+       <Button Content="Открыть TXT…" Click="OpenLines_Click"/>
+       <TextBlock Text="Количество отрезков" Margin="0,9,0,3"/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <TextBox x:Name="CountInput" Text="500000" Margin="0,0,5,0" ToolTip="От 1 до 500 000"/>
+        <ComboBox Grid.Column="1" x:Name="Distribution" SelectedIndex="0">
+         <ComboBoxItem Content="Плотные"/><ComboBoxItem Content="Короткие"/>
+        </ComboBox>
+       </Grid>
+       <Button x:Name="GenerateButton" Content="Создать" Click="Generate_Click"/>
+      </StackPanel></GroupBox>
+      <GroupBox Header="Индекс"><StackPanel>
+       <CheckBox x:Name="UseTree" Content="Quadtree" IsChecked="True" Checked="LineSetting_Changed" Unchecked="LineSetting_Changed" ToolTip="Без дерева используется полный перебор с AABB"/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="45"/><ColumnDefinition Width="88"/></Grid.ColumnDefinitions>
+        <TextBlock Text="Глубина" VerticalAlignment="Center"/>
+        <TextBox Grid.Column="1" x:Name="DepthInput" Text="7" ToolTip="От 1 до 12"/>
+        <Button Grid.Column="2" Content="Применить" Click="Rebuild_Click" Margin="5,0,0,0"/>
+       </Grid>
+      </StackPanel></GroupBox>
+      <GroupBox Header="Измерения"><StackPanel>
+       <Button Content="Бенчмарк…" Click="Benchmark_Click"/>
+      </StackPanel></GroupBox>
+     </StackPanel>
+     <StackPanel x:Name="PolygonControls" Visibility="Collapsed">
+      <GroupBox Header="Данные"><StackPanel>
+       <ComboBox x:Name="PolygonSampleBox" SelectionChanged="PolygonSample_Changed"/>
+       <Button Content="Открыть TXT…" Click="OpenPolygon_Click"/>
+      </StackPanel></GroupBox>
+     </StackPanel>
+     <GroupBox Header="Окно"><StackPanel>
+      <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+       <StackPanel Margin="0,0,5,0"><TextBlock Text="Ширина" Margin="0,0,0,3"/><TextBox x:Name="WindowWidth" Text="80"/></StackPanel>
+       <StackPanel Grid.Column="1"><TextBlock Text="Высота" Margin="0,0,0,3"/><TextBox x:Name="WindowHeight" Text="60"/></StackPanel>
+      </Grid>
+      <Button Content="Применить размеры" Click="Resize_Click"/>
+     </StackPanel></GroupBox>
+     <GroupBox Header="Отображение"><StackPanel>
+      <CheckBox x:Name="ShowOriginal" Content="Исходная геометрия" IsChecked="True" Checked="VisualSetting_Changed" Unchecked="VisualSetting_Changed"/>
+      <CheckBox x:Name="ShowLinePoints" Content="Точки" IsChecked="True" Checked="VisualSetting_Changed" Unchecked="VisualSetting_Changed"/>
+      <StackPanel x:Name="PolygonDisplayControls" Visibility="Collapsed">
+       <CheckBox x:Name="ShowFill" Content="Заливка" IsChecked="True" Checked="VisualSetting_Changed" Unchecked="VisualSetting_Changed"/>
+       <CheckBox x:Name="ShowVertices" Content="Вершины" Checked="VisualSetting_Changed" Unchecked="VisualSetting_Changed"/>
+      </StackPanel>
+     </StackPanel></GroupBox>
+     <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+      <Button Content="Вписать" Click="Fit_Click" Margin="0,3,5,0"/>
+      <Button Grid.Column="1" Content="Сохранить TXT…" Click="Export_Click"/>
+     </Grid>
+    </StackPanel>
+   </ScrollViewer>
+   <Grid Grid.Column="2">
+    <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="27"/></Grid.RowDefinitions>
+    <Border BorderBrush="#AAAAAA" BorderThickness="1" Background="White" ClipToBounds="True">
+     <Grid ToolTip="ЛКМ — окно. Ctrl+ЛКМ — вершина. ПКМ — сдвиг вида. Колесо — масштаб.">
+      <gl:GLWpfControl x:Name="Viewport" Render="Render" MouseLeftButtonDown="Viewport_MouseDown" MouseLeftButtonUp="Viewport_MouseUp" MouseRightButtonDown="Viewport_MouseDown" MouseRightButtonUp="Viewport_MouseUp" MouseMove="Viewport_MouseMove" MouseWheel="Viewport_MouseWheel"/>
+      <Canvas x:Name="AxisLabels" IsHitTestVisible="False"/>
+     </Grid>
+    </Border>
+    <Grid Grid.Row="1" Margin="0,5,0,0" ClipToBounds="True">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="0"/><ColumnDefinition Width="185"/></Grid.ColumnDefinitions>
+     <TextBlock x:Name="TimingText" Grid.Column="1" Text="Время: —" Margin="10,0,0,0" TextWrapping="NoWrap"/>
+     <TextBlock x:Name="StatsText" Text="" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+    </Grid>
+   </Grid>
+  </Grid>
+ </DockPanel>
+</Window>

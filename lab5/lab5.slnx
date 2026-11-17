@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Lab5.Core/Lab5.Core.csproj" />
+    <Project Path="src/Lab5.App/Lab5.App.csproj" />
+    <Project Path="src/Lab5.Checks/Lab5.Checks.csproj" />
+  </Folder>
+</Solution>
